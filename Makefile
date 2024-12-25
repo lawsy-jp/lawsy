@@ -1,9 +1,9 @@
 -include .env  # load .env if it exists
 
 OUTPUT_DIR ?= ./outputs # set OUTPUT_DIR=./outputs if it's unset
-PYTHON := .venv/bin/python
-RUFF := .venv/bin/ruff
-PYRIGHT := .venv/bin/pyright
+PYTHON := . .venv/bin/activate && python
+RUFF := . .venv/bin/activate && ruff
+PYRIGHT := . .venv/bin/activate && pyright
 
 
 # Setup --------------------------------------------------------------------------
