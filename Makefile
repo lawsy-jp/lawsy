@@ -1,6 +1,10 @@
 -include .env  # load .env if it exists
 
 OUTPUT_DIR ?= ./outputs # set OUTPUT_DIR=./outputs if it's unset
+PYTHON := .venv/bin/python
+RUFF := .venv/bin/ruff
+PYRIGHT := .venv/bin/pyright
+
 
 # Setup --------------------------------------------------------------------------
 .PHONY: activate install
@@ -18,18 +22,18 @@ install:
 .PHONY: format lint
 
 
-format: activate
-	ruff format
+format:
+	${RUFF} format
 
 
-lint: activate
-	ruff check src
-	pyright src
+lint:
+	${RUFF} check src
+	${PYRIGHT} src
 
 
 # Kokkai Crawler -----------------------------------------------------------------
 .PHONY: crawl-all
 
 
-crawl-all: activate
-	python src/kokkai_crawler/main.py $(shell echo ${OUTPUT_DIR})/data/kokkai/mtgs.jsonl --from-year 1945
+crawl-all:
+	${PYTHON} src/kokkai_crawler/main.py $(shell echo ${OUTPUT_DIR})/data/kokkai/mtgs.jsonl --from-year 1945
