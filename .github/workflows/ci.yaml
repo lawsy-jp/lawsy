@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "Makefile"
+      - ".github/workflows/ci.yaml"
+
+env:
+  PYTHON_VERSION: 3.12.7
+
+jobs:
+  lint:
+    permissions:
+      contents: 'read'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.1.0
+      - name: Setup Python
+        uses: actions/setup-python@v4.5.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache
+        uses: actions/cache@v3.0.11
+        with:
+          path: |
+            ${{ env.pythonLocation }}/bin
+            ${{ env.pythonLocation }}/lib/python3.12/site-packages
+          key: ${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}
+      - name: Install Dependencies
+        run: |
+          pip install uv
+          make install
+      - name: Lint
+        run: make lint
