@@ -1,6 +1,7 @@
 import os
 import time
 from pathlib import Path
+import base64
 
 import dotenv
 import streamlit as st
@@ -20,8 +21,33 @@ dotenv.load_dotenv()
 data_dir = Path(os.getenv("DATA_DIR", Path(__file__).parent.parent.parent.parent / "data"))
 output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
 icon_path = Path(__file__).parent / "Lawsy_logo_circle.png"
+logo_path = Path(__file__).parent / "Lawsy_logo_title_long.png"
 
 st.set_page_config(page_title="Lawsy", layout="wide", page_icon=str(icon_path))
+
+
+def get_base64_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode()
+logo_base64 = get_base64_image(logo_path)
+
+st.markdown(
+    f"""
+    <style>
+    [data-testid="stSidebarHeader"]::before {{
+        content: " ";
+        display: block;
+        width: 350px;
+        height: 80px;
+        background-image: url("data:image/png;base64,{logo_base64}");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 init_cookies()
 # loading cookie might require about 2 sec to sync, so we execute time-consuming preload here

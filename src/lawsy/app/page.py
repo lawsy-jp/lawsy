@@ -106,7 +106,7 @@ def create_lawsy_page(report: Report | None = None):
         # gemini_flash = "vertex_ai/gemini-2.0-flash-001"
         # gemini_flash_lite = "vertex_ai/gemini-2.0-flash-lite-preview-02-05"
 
-        st.title("Lawsy" if report is None else report.title)
+        st.title(" " if report is None else report.title)
         query = st.text_area(
             "Your Research Topic", key="research_page_query_text_input", value="" if report is None else report.query
         )
