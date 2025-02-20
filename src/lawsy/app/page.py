@@ -10,16 +10,14 @@ import streamlit as st
 from loguru import logger
 from streamlit_markmap import markmap
 
+from lawsy.ai.news_query_maker import NewsQueryMaker
 from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.query_refiner import QueryRefiner
 from lawsy.ai.report_writer import StreamConclusionWriter, StreamLeadWriter, StreamSectionWriter
+from lawsy.ai.utils.get_news_funcs import collect_news_additional_infos, get_google_news
 from lawsy.app.config import get_config
-from lawsy.app.styles.decorate_html import (
-    embed_tooltips,
-    get_hiddenbox_ref_html,
-    get_reference_tooltip_html,
-)
+from lawsy.app.styles.decorate_html import embed_tooltips, get_hiddenbox_ref_html, get_reference_tooltip_html
 from lawsy.app.utils.cloud_logging import gcp_logger
 from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
@@ -71,39 +69,57 @@ markmap:
 def create_lawsy_page(report: Report | None = None):
     def page_func():
         dotenv.load_dotenv()
+        col1, col2 = st.columns([3, 1])
         css = (Path(__file__).parent / "styles" / "style.css").read_text()
-        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+        col1.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+        col2.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
         if report is not None:
+            print(report.news)
             logger.info("reproduce previous report")
-            with st.status("Reasoning Details"):
-                st.write("query:")
-                st.write(report.query)
+            with col1.status("Reasoning Details"):
+                col1.write("query:")
+                col1.write(report.query)
                 if report.refined_query is not None:
-                    st.write("refined query:")
-                    st.write(report.refined_query)
-                st.write("generated topics:")
+                    col1.write("refined query:")
+                    col1.write(report.refined_query)
+                col1.write("generated topics:")
                 for i, topic in enumerate(report.topics, start=1):
-                    st.write(f"[{i}] {topic}")
-                st.write(f"found {len(report.references)} sources:")
+                    col1.write(f"[{i}] {topic}")
+                col1.write(f"found {len(report.references)} sources:")
                 for i, result in enumerate(report.references, start=1):
-                    st.write(f"[{i}] " + result.title)
-                st.write("generated outline:")
-                st.code(report.outline)
+                    col1.write(f"[{i}] " + result.title)
+                col1.write("generated outline:")
+                col1.code(report.outline)
             tooltips = get_reference_tooltip_html(report.references)
             # show
             pos = report.report_content.find("## ")
             assert pos >= 0
             title_and_lead = report.report_content[:pos]
             rest = report.report_content[pos:]
-            st.write(title_and_lead)
+            col1.write(title_and_lead)
             draw_mindmap(report.mindmap)
             rest = embed_tooltips(rest, tooltips)
-            st.write(rest, unsafe_allow_html=True)
-            st.markdown("## References")
+            col1.write(rest, unsafe_allow_html=True)
+            col1.markdown("## References")
             for i, result in enumerate(report.references, start=1):
                 html = get_hiddenbox_ref_html(i, result)
-                st.markdown(html, unsafe_allow_html=True)
+                col1.markdown(html, unsafe_allow_html=True)
+
+            col2.markdown('<div class="news-title">NewsField</div>', unsafe_allow_html=True)
+            if report.news is not None:
+                for i, article in enumerate(report.news):
+                    col2.markdown(
+                        f'<a href="{article["link"]}" target="_blank">'
+                        f'<img src="{article["image"]}" width="150"></a>',
+                        unsafe_allow_html=True,
+                    )
+                    col2.markdown(
+                        f'<div class="news-field">' f'<a href="{article["link"]}">{article["title"]}</div>',
+                        unsafe_allow_html=True,
+                    )
+            else:
+                col2.markdown("No News")
             return
 
         assert report is None
@@ -119,18 +135,18 @@ def create_lawsy_page(report: Report | None = None):
         # gemini_flash = load_lm("vertex_ai/gemini-2.0-flash-001")
         # gemini_flash_lite = load_lm("vertex_ai/gemini-2.0-flash-lite-preview-02-05")
 
-        st.title("Lawsy" if report is None else report.title)
-        query = st.text_area(
+        col1.title("Lawsy" if report is None else report.title)
+        query = col1.text_area(
             "Your Research Topic", key="research_page_query_text_input", value="" if report is None else report.query
         )
         if query is not None:
             query = query.strip()
-        clicked = st.button("Research", key="research_page_research_button")
+        clicked = col1.button("Research", key="research_page_research_button")
 
         if query and clicked:
             logger.info("query: " + query)
             gcp_logger.log_struct({"event": "start-research", "user_id": user_id, "query": query}, severity="INFO")
-            with st.status("processing", expanded=True) as status:
+            with col1.status("processing", expanded=True) as status:
                 # refine query
                 if len(query) >= 64:
                     status.update(label="refine query...")
@@ -138,10 +154,30 @@ def create_lawsy_page(report: Report | None = None):
                     query_refiner_result = query_refiner(query=query)
                     refined_query = query_refiner_result.refined_query
                     logger.info(f"refined_query: {refined_query}")
-                    st.write("refined query:")
-                    st.write(refined_query)
+                    col1.write("refined query:")
+                    col1.write(refined_query)
                 else:
                     refined_query = query
+
+                # get news
+                status.update(label="News search...")
+                news_query_maker = NewsQueryMaker(lm=gpt_4o)
+                news_query = news_query_maker(refined_query)
+                news = get_google_news(news_query.newsquery, 8)
+                news = collect_news_additional_infos(news)
+                logger.info(f"News Query:{news_query.newsquery}")
+                col1.write(f"News Quwery: {news_query.newsquery}")
+                logger.info(f"Found {len(news)} News.")
+                col1.write(f"Found {len(news)} News.")
+
+                logger.info(f"Got News num{len(news)}")
+                for i, article in enumerate(news):
+                    col2.markdown(
+                        f'<a href="{article["link"]}" target="_blank">'
+                        f'<img src="{article["image"]}" width="150"></a>',
+                        unsafe_allow_html=True,
+                    )
+                    col2.markdown(f'[{article["title"]}]({article["link"]})')
 
                 # web search
                 status.update(label="web search...")
@@ -177,9 +213,9 @@ def create_lawsy_page(report: Report | None = None):
                     )
                 )
                 expanded_queries = [query] + query_expander_result.topics
-                st.write("generated topics:")
+                col1.write("generated topics:")
                 for i, topic in enumerate(query_expander_result.topics, start=1):
-                    st.write(f"[{i}] {topic}")
+                    col1.write(f"[{i}] {topic}")
 
                 # article search
                 article_search_results = []
@@ -214,9 +250,9 @@ def create_lawsy_page(report: Report | None = None):
                 cossims = vecs.dot(rich_query_vec / np.linalg.norm(rich_query_vec))
                 index = np.argsort(cossims)[::-1]
                 search_results = [search_results[i] for i in index]
-                st.write(f"found {len(search_results)} sources:")
+                col1.write(f"found {len(search_results)} sources:")
                 for i, result in enumerate(search_results, start=1):
-                    st.write(f"[{i}] " + result.title)
+                    col1.write(f"[{i}] " + result.title)
 
                 # prepare report
                 status.update(label="writing report...")
@@ -249,8 +285,8 @@ def create_lawsy_page(report: Report | None = None):
                 outline_creater_result = outline_creater(
                     query=query, topics=query_expander_result.topics, references=references
                 )
-                st.write("generated outline:")
-                st.code(outline_creater_result.outline.to_text())
+                col1.write("generated outline:")
+                col1.code(outline_creater_result.outline.to_text())
                 logger.info(
                     " ".join(
                         [
@@ -269,12 +305,12 @@ def create_lawsy_page(report: Report | None = None):
 
             # show
             outline = outline_creater_result.outline
-            st.write("# " + outline.title)  # title
-            lead_box = st.empty()  # lead
-            mindmap_box = st.empty()  # mindmap
-            section_boxes = [st.empty() for _ in outline.section_outlines]  # section
-            conclusion_header_box = st.empty()
-            conclusion_box = st.empty()  # conclusion
+            col1.write("# " + outline.title)  # title
+            lead_box = col1.empty()  # lead
+            mindmap_box = col1.empty()  # mindmap
+            section_boxes = [col1.empty() for _ in outline.section_outlines]  # section
+            conclusion_header_box = col1.empty()
+            conclusion_box = col1.empty()  # conclusion
             with mindmap_box.container():
                 mindmap = outline.to_text()
                 logger.info("mindmap :\n" + mindmap)
@@ -322,11 +358,11 @@ def create_lawsy_page(report: Report | None = None):
                 + ["## 結論", conclusion]
             )
 
-            st.write("## References")
+            col1.write("## References")
             for i, result in enumerate(search_results, start=1):
                 html = get_hiddenbox_ref_html(i, result)
-                st.markdown(html, unsafe_allow_html=True)
-                st.write("")
+                col1.markdown(html, unsafe_allow_html=True)
+                col1.write("")
 
             # save
             title = outline.title
@@ -346,6 +382,7 @@ def create_lawsy_page(report: Report | None = None):
                 mindmap=mindmap,
                 references=search_results,  # reference = search result for now
                 search_results=search_results,
+                news=news,
             )
             new_report.save(user_id=user_id)
             PAGES[new_report.id] = st.Page(

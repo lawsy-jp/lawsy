@@ -32,6 +32,7 @@ dependencies = [
     "streamlit-cookies-controller>=0.0.4",
     "google-cloud-storage>=3.0.0",
     "streamlit-tags>=1.2.8",
+    "feedparser>=6.0.11",
 ]
 
 [dependency-groups]

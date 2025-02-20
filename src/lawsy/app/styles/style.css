@@ -36,6 +36,15 @@ h3 {
     list-style-type: disc; /* ・をリストアイテムの前に追加 */
 }
 
+/* News関連 */
+.news-title{
+    font-size:24px;
+}
+.news-field{
+    font-size:14px;
+}
+
+
 /* リファレンスをたたむ */
 .toggle-box {
     display: none;
