@@ -16,54 +16,47 @@ dotenv.load_dotenv()
 output_dir = Path(os.getenv("OUTPUT_DIR", Path(__file__).parent.parent.parent.parent / "outputs"))
 
 
+@st.cache_resource
 def load_article_chunks() -> dict:
-    if "article_chunks" not in st.session_state:
-        with st.spinner("loading article chunks..."):
-            logger.info("loading article chunks")
-            result = {}
-            with open(output_dir / "lawsy" / "article_chunks.jsonl") as fin:
-                for line in fin:
-                    d = json.loads(line)
-                    key = (d["file_name"], d["anchor"])
-                    result[key] = d
-            st.session_state.article_chunks = result
-    return st.session_state.article_chunks
+    with st.spinner("loading article chunks..."):
+        logger.info("loading article chunks")
+        result = {}
+        with open(output_dir / "lawsy" / "article_chunks.jsonl") as fin:
+            for line in fin:
+                d = json.loads(line)
+                key = (d["file_name"], d["anchor"])
+                result[key] = d
+        return result
 
 
+@st.cache_resource
 def load_text_encoder(dim: int | None = None) -> ME5Instruct | OpenAITextEmbedding:
-    if "text_encoder" not in st.session_state:
-        with st.spinner("loading text encoder..."):
-            logger.info("loading text encoder...")
-            model_name = os.getenv("ENCODER_MODEL_NAME")
-            prefix = model_name.split("/")[0] if model_name is not None else None
-            if model_name is None or prefix == "openai":
-                st.session_state.text_encoder = OpenAITextEmbedding(dim=dim)
-            else:
-                st.session_state.text_encoder = ME5Instruct()
-    return st.session_state.text_encoder
+    with st.spinner("loading text encoder..."):
+        logger.info("loading text encoder...")
+        model_name = os.getenv("ENCODER_MODEL_NAME")
+        prefix = model_name.split("/")[0] if model_name is not None else None
+        if model_name is None or prefix == "openai":
+            return OpenAITextEmbedding(dim=dim)
+        else:
+            return ME5Instruct()
 
 
+@st.cache_resource
 def load_vector_search_article_retriever() -> FaissFlatArticleRetriever:
-    if "vector_search_article_retriever" not in st.session_state:
-        with st.spinner("loading vector search article retriever..."):
-            logger.info("loading vector search article retriever...")
-            st.session_state.vector_search_article_retriever = FaissFlatArticleRetriever.load(
-                output_dir / "lawsy" / "article_chunks_faiss"
-            )
-    return st.session_state.vector_search_article_retriever
+    with st.spinner("loading vector search article retriever..."):
+        logger.info("loading vector search article retriever...")
+        return FaissFlatArticleRetriever.load(output_dir / "lawsy" / "article_chunks_faiss")
 
 
+@st.cache_resource
 def load_google_search_web_retriever() -> GoogleSearchWebRetriever:
-    if "google_search_web_retriever" not in st.session_state:
-        with st.spinner("loading google search web retriever..."):
-            logger.info("loading google search web retriever...")
-            st.session_state.google_search_web_retriever = GoogleSearchWebRetriever()
-    return st.session_state.google_search_web_retriever
+    with st.spinner("loading google search web retriever..."):
+        logger.info("loading google search web retriever...")
+        return GoogleSearchWebRetriever()
 
 
+@st.cache_resource
 def load_tavily_search_web_retriever() -> TavilySearchWebRetriever:
-    if "tavily_search_web_retriever" not in st.session_state:
-        with st.spinner("loading tavily search web retriever..."):
-            logger.info("loading tavily search web retriever...")
-            st.session_state.tavily_search_web_retriever = TavilySearchWebRetriever()
-    return st.session_state.tavily_search_web_retriever
+    with st.spinner("loading tavily search web retriever..."):
+        logger.info("loading tavily search web retriever...")
+        return TavilySearchWebRetriever()

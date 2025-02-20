@@ -11,14 +11,13 @@ cookie_controller = None
 def init_cookies():
     global cookie_controller
     if "lawsy_cookie_initialized" not in st.session_state:
-        st.session_state.lawsy_cookie_initialized = False
+        st.session_state.lawsy_cookie_initialized = True
     cookie_controller = CookieController(key="lawsy-cookie")
 
 
 def get_user_id() -> str:
     while not st.session_state.get("lawsy_cookie_initialized", False):
         init_cookies()
-        # wait until cookies are synced proposed in https://www.reddit.com/r/Streamlit/comments/1fdm1pj/persisting_session_state_data_across_browser/
         st.session_state.lawsy_cookie_initialized = True
     assert cookie_controller is not None
     user_id = cookie_controller.get("user_id")
@@ -38,4 +37,4 @@ def get_cookie(name: str) -> Any:
 
 def set_cookie(name: str, value: Any) -> None:
     assert cookie_controller is not None
-    cookie_controller.set(name, json.dumps(value))
+    cookie_controller.set(name, json.dumps(value), max_age=365 * 86400)

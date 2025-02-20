@@ -25,7 +25,10 @@ class Report(BaseModel):
     mindmap: str
     references: list  # list[SearchResultType] にすると Pydantic が union の解決に失敗するらしくエラーが出る…
     search_results: list  # list[SearchResultType] にすると Pydantic が union の解決に失敗するらしくエラーが出る…
-    news: list | None = None  # 追加
+    messages: list[dict[str, str]] | None = (
+        None  # reasoning history in chat completion messages format (a list of {"role": ..., "content": ...})
+    news: list | None = None  # News用に追加
+    )
 
     @staticmethod
     def from_dict(d: dict) -> "Report":
@@ -47,6 +50,7 @@ class Report(BaseModel):
             mindmap=self.mindmap,
             references=[reference.model_dump(mode="json") for reference in self.references],
             search_results=[search_result.model_dump(mode="json") for search_result in self.search_results],
+            messages=self.messages,
             news=self.news,
         )
 
