@@ -9,10 +9,12 @@ import numpy as np
 import streamlit as st
 from loguru import logger
 
+from lawsy.ai.news_query_maker import NewsQueryMaker
 from lawsy.ai.outline_creater import OutlineCreater
 from lawsy.ai.query_expander import QueryExpander
 from lawsy.ai.query_refiner import QueryRefiner
 from lawsy.ai.report_writer import StreamConclusionWriter, StreamLeadWriter, StreamSectionWriter
+from lawsy.ai.utils.get_news_funcs import collect_news_additional_infos, get_google_news
 from lawsy.app.config import get_config
 from lawsy.app.report import REPORT_PAGES, create_report_page
 from lawsy.app.styles.decorate_html import (
@@ -107,6 +109,25 @@ def create_research_page():
             messages.append({"role": "assistant", "content": content})
         else:
             refined_query = query
+
+        #Get News
+        status.update(label="News search...")
+        news_query_maker = NewsQueryMaker(lm=gpt_4o)
+        news_query = news_query_maker(refined_query)
+        news = get_google_news(news_query.newsquery, 8)
+        news = collect_news_additional_infos(news)
+        logger.info(f"News Query:{news_query.newsquery}")
+        st.write(f"News Quwery: {news_query.newsquery}")
+        logger.info(f"Found {len(news)} News.")
+        st.write(f"Found {len(news)} News.")
+        logger.info(f"Got News num{len(news)}")
+        for i, article in enumerate(news):
+            st.markdown(
+                f'<a href="{article["link"]}" target="_blank">'
+                f'<img src="{article["image"]}" width="250"></a>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(f'[{article["title"]}]({article["link"]})')
 
         web_search_results = []
 
@@ -354,6 +375,7 @@ def create_research_page():
         references=search_results,  # reference = search result for now
         search_results=search_results,
         messages=messages,
+        news=news,
     )
     new_report.save(user_id=user_id)
     REPORT_PAGES[new_report.id] = st.Page(

@@ -54,6 +54,20 @@ def create_report_page(report: Report):
         for i, result in enumerate(report.references, start=1):
             html = get_hiddenbox_ref_html(i, result)
             st.markdown(html, unsafe_allow_html=True)
+
+        if report.news is not None:
+            for i, article in enumerate(report.news):
+                st.markdown(
+                    f'<a href="{article["link"]}" target="_blank">'
+                    f'<img src="{article["image"]}" width="250"></a>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f'<div class="news-field">' f'<a href="{article["link"]}">{article["title"]}</div>',
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.markdown("No News")
         return
 
     return page_func

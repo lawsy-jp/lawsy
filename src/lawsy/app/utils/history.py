@@ -27,8 +27,8 @@ class Report(BaseModel):
     search_results: list  # list[SearchResultType] にすると Pydantic が union の解決に失敗するらしくエラーが出る…
     messages: list[dict[str, str]] | None = (
         None  # reasoning history in chat completion messages format (a list of {"role": ..., "content": ...})
-    news: list | None = None  # News用に追加
     )
+    news: list | None = None  # News用に追加
 
     @staticmethod
     def from_dict(d: dict) -> "Report":
