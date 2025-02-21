@@ -27,7 +27,8 @@ st.set_page_config(page_title="Lawsy", layout="wide", page_icon=str(icon_path))
 # streamlit-cookie-controllerが意図せず空白スペースを作ってしまうのでそれを非表示する
 # https://github.com/NathanChen198/streamlit-cookies-controller/issues/8#issuecomment-2594580956
 st.markdown(
-    """
+    # f-stringではなくすると機能しなくなるので注意（なぜ…）
+    f"""
         <style>
             .element-container:has(
                 iframe[height="0"]
@@ -37,7 +38,7 @@ st.markdown(
             display: none;
             }}
         </style>
-    """,
+    """,  # noqa: F541
     unsafe_allow_html=True,
 )
 init_cookies()

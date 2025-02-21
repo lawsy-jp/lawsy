@@ -15,8 +15,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV HF_HOME="/app/cache/"
 # uncomment if you use ME5 model
 # COPY ./cache/hub/models--intfloat--multilingual-e5-large-instruct /app/cache/hub/models--intfloat--multilingual-e5-large-instruct
-COPY .env /app/.env
 COPY ./outputs/lawsy/article_chunks_faiss /app/outputs/lawsy/article_chunks_faiss
+COPY .env /app/.env
+COPY .streamlit/config.toml /app/.streamlit/config.toml
 
 ARG PORT="8501"
 ENV PORT=${PORT}

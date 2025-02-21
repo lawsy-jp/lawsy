@@ -92,7 +92,7 @@ def create_research_page():
     query_container.empty()
     logger.info("query: " + query)
     gcp_logger.log_struct({"event": "start-research", "user_id": user_id, "query": query}, severity="INFO")
-    with st.status("reasoning...", expanded=True) as status:
+    with st.status("推論中...", expanded=True) as status:
         content = query
         with st.chat_message("user"):
             st.write(content)
@@ -100,12 +100,12 @@ def create_research_page():
 
         # refine query
         if len(query) >= 64:
-            status.update(label="refine query...")
+            status.update(label="クエリーを検索向けに変換...")
             query_refiner = QueryRefiner(lm=gpt_4o)
             query_refiner_result = query_refiner(query=query)
             refined_query = query_refiner_result.refined_query
             logger.info(f"refined_query: {refined_query}")
-            content = f"refined query:\n\n{refined_query}"
+            content = f"検索向けに変換されたクエリー:\n\n{refined_query}"
             with st.chat_message("assistant", avatar=logo):
                 st.write(content)
             messages.append({"role": "assistant", "content": content})
@@ -140,14 +140,14 @@ def create_research_page():
 
         # free web search
         if get_config("free_web_search_enabled", True):
-            status.update(label="web search...")
+            status.update(label="Web 検索（フリードメイン）...")
             logger.info("free web search")
             hits = tavily_search_web_retriever.search(refined_query, k=10)
             logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
             web_search_results.extend(hits)
             content = "\n\n".join(
                 [
-                    "search on web:",
+                    "Web 検索結果（フリードメイン）:",
                     "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
                 ]
             )
@@ -157,13 +157,14 @@ def create_research_page():
 
         # web search on specified domains
         if len(get_config("web_search_domains")) > 0:
+            status.update(label="Web 検索（ドメイン指定）...")
             domains = get_config("web_search_domains")
             logger.info("web search with domains: " + ", ".join(domains))
             hits = tavily_search_web_retriever.search(refined_query, k=10, domains=domains)
             web_search_results.extend(hits)
             content = "\n\n".join(
                 [
-                    "search on specified domains:",
+                    "Web 検索結果（ドメイン指定）:",
                     "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
                 ]
             )
@@ -172,7 +173,7 @@ def create_research_page():
             messages.append({"role": "assistant", "content": content})
 
         # query expansion
-        status.update(label="query expansion...")
+        status.update(label="クエリー展開...")
         query_expander = QueryExpander(lm=gpt_4o)
         web_search_result_texts = []
         for i, result in enumerate(web_search_results, start=1):
@@ -192,7 +193,7 @@ def create_research_page():
         expanded_queries = [query] + query_expander_result.topics
         content = "\n\n".join(
             [
-                "expanded queries:",
+                "展開されたクエリー:",
                 "\n\n".join([f"[{i}] {topic}" for i, topic in enumerate(query_expander_result.topics, start=1)]),
             ]
         )
@@ -201,7 +202,7 @@ def create_research_page():
         messages.append({"role": "assistant", "content": content})
 
         # article search
-        status.update(label="legal article search...")
+        status.update(label="法令検索...")
         article_search_results = []
         query_vectors = text_encoder.get_query_embeddings(expanded_queries)
         for expanded_query, query_vector in zip(expanded_queries, query_vectors):
@@ -211,7 +212,7 @@ def create_research_page():
             logger.info("\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]))
             content = "\n\n".join(
                 [
-                    "法令検索:",
+                    "法令検索結果:",
                     expanded_query,
                     "\n".join(["- " + result.title + " (" + str(result.url) + ")" for result in hits]),
                 ]
@@ -220,7 +221,7 @@ def create_research_page():
                 st.write(content)
             messages.append({"role": "assistant", "content": content})
         # fusion by bi-encoder
-        status.update(label="rerank search results...")
+        status.update(label="収集したナレッジのリランキング...")
         url_to_articles = {result.url: result for result in article_search_results}
         unique_article_search_results = list(url_to_articles.values())
         url_to_web_pages = {
@@ -244,7 +245,7 @@ def create_research_page():
         search_results = [search_results[i] for i in index]
         content = "\n\n".join(
             [
-                f"reranked {len(search_results)} sources:",
+                f"リランキングされたナレッジ（全 {len(search_results)} 件）:",
                 *[f"[{i}] {result.title}" for i, result in enumerate(search_results, start=1)],
             ]
         )
@@ -253,6 +254,7 @@ def create_research_page():
         messages.append({"role": "assistant", "content": content})
 
         # knowledge selection
+        status.update(label="レポート作成に参照するナレッジの抽出...")
         references = []
         seen = set()
         total_length = 0
@@ -275,16 +277,20 @@ def create_research_page():
             if len(seen) >= 200 or total_length >= 100000:  # max 128k tokens for GPT-4o
                 break
         logger.info(f"effective knowledges: {len(seen)}")
+        content = f"レポート作成に参照するナレッジを抽出（全 {len(seen)} 件）"
+        with st.chat_message("assistant", avatar=logo):
+            st.write(content)
+        messages.append({"role": "assistant", "content": content})
 
         # create outline
-        status.update(label="creating outline...")
+        status.update(label="アウトラインの生成...")
         outline_creater = OutlineCreater(lm=gpt_4o)
         outline_creater_result = outline_creater(
             query=query, topics=query_expander_result.topics, references=references
         )
         content = "\n\n".join(
             [
-                "generated outline:",
+                "生成されたアウトライン:",
                 f"```{outline_creater_result.outline.to_text()}```",
             ]
         )
