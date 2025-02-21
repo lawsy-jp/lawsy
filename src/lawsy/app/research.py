@@ -113,7 +113,7 @@ def create_research_page():
                 refined_query = query
 
             # get news
-            status.update(label="News search...")
+            status.update(label="ニュース取得中...")
             news_query_maker = NewsQueryMaker(lm=gpt_4o)
             news_query = news_query_maker(refined_query)
             news = get_google_news(news_query.newsquery, 10)
