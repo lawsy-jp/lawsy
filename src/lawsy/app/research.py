@@ -123,18 +123,18 @@ def create_research_page():
         logger.info(f"Found {len(news)} News.")
         st.write(f"Found {len(news)} News.")
         logger.info(f"Got News num{len(news)}")
-        with col2:
-            st.markdown('<div class="news-title">News</div>', unsafe_allow_html=True)
-            if len(news) > 0:
-                for i, article in enumerate(news):
-                    st.markdown(
-                        f'<a href="{article["link"]}" target="_blank">'
-                        f'<img src="{article["image"]}" width="250"></a>',
-                        unsafe_allow_html=True,
-                    )
-                    st.markdown(f'[{article["title"]}]({article["link"]})')
-            else:
-                st.markdown('<div class="news-field">No News...</div>', unsafe_allow_html=True)
+        #with col2:
+        st.markdown('<div class="news-title">News</div>', unsafe_allow_html=True)
+        if len(news) > 0:
+            for i, article in enumerate(news):
+                st.markdown(
+                    f'<a href="{article["link"]}" target="_blank">'
+                    f'<img src="{article["image"]}" width="250"></a>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown(f'[{article["title"]}]({article["link"]})')
+        else:
+            st.markdown('<div class="news-field">No News...</div>', unsafe_allow_html=True)
 
         web_search_results = []
 
