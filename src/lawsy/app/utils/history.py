@@ -1,10 +1,8 @@
 import json
-import os
 from pathlib import Path
 from typing import Annotated, Union
 
 import streamlit as st
-from google.cloud import storage
 from pydantic import BaseModel, ConfigDict
 
 from lawsy.retriever.search_result import ArticleSearchResult, WebSearchResult, to_search_result
@@ -54,34 +52,22 @@ class Report(BaseModel):
             news=self.news,
         )
 
-    def save(self, user_id: str) -> None:
-        history = [self] + get_history(user_id)
-        client = get_storage_client()
-        bucket = client.bucket(os.environ["HISTORY_BUCKET_NAME"])
-        blob = bucket.blob(f"{user_id}.json")
-        json_data = json.dumps([report.to_dict() for report in history], ensure_ascii=False)
-        blob.upload_from_string(data=json_data, content_type="text/json")  # type: ignore
-        st.session_state.history = history
+    def save(self, history_dir: Path | str) -> None:
+        history_dir = Path(history_dir)
+        history_dir.mkdir(parents=True, exist_ok=True)
+        with open(history_dir / f"{self.id}.json", "w") as fout:
+            json.dump(self.to_dict(), fout, ensure_ascii=False)
 
 
-def get_storage_client() -> storage.Client:
-    key_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or "sa.json"
-    if Path(key_file).exists():
-        client = storage.Client.from_service_account_json(key_file)
-    else:
-        client = storage.Client()
-    return client
-
-
-def get_history(user_id: str) -> list[Report]:
-    if "history" in st.session_state:
-        return st.session_state.history
-    client = get_storage_client()
-    bucket = client.bucket(os.environ["HISTORY_BUCKET_NAME"])
-    blob = bucket.blob(f"{user_id}.json")
-    if blob.exists():  # type: ignore
-        data = json.loads(blob.download_as_text())  # type: ignore
-        history = [Report.from_dict(d) for d in data]  # type: ignore
+def get_history(history_dir: Path | str) -> list[Report]:
+    history_dir = Path(history_dir)
+    if history_dir.exists():  # type: ignore
+        history = []
+        for history_file in history_dir.glob("*.json"):
+            with open(history_file) as fin:
+                data = json.load(fin)
+            history.append(Report.from_dict(data))
+        history = sorted(history, key=lambda report: -report.timestamp)
         st.session_state.history = history
         return history
     else:

@@ -20,8 +20,6 @@ from lawsy.app.report import REPORT_PAGES, create_report_page
 from lawsy.app.styles.decorate_html import (
     get_hiddenbox_ref_html,
 )
-from lawsy.app.utils.cloud_logging import gcp_logger
-from lawsy.app.utils.cookie import get_user_id
 from lawsy.app.utils.history import Report
 from lawsy.app.utils.lm import load_lm
 from lawsy.app.utils.mindmap import draw_mindmap
@@ -65,8 +63,6 @@ def create_research_page():
     css = (Path(__file__).parent / "styles" / "style.css").read_text()
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
-    user_id = get_user_id()
-    logger.info(f"user_id: {user_id}")
     text_encoder = load_text_encoder()
     vector_search_article_retriever = load_vector_search_article_retriever()
     tavily_search_web_retriever = load_tavily_search_web_retriever()
@@ -91,7 +87,6 @@ def create_research_page():
     messages = []
     query_container.empty()
     logger.info("query: " + query)
-    gcp_logger.log_struct({"event": "start-research", "user_id": user_id, "query": query}, severity="INFO")
     with st.status("推論中...", expanded=True) as status:
         content = query
         with st.chat_message("user"):
@@ -395,18 +390,10 @@ def create_research_page():
         messages=messages,
         news=news,
     )
-    new_report.save(user_id=user_id)
+    new_report.save(get_config("history_dir"))
     REPORT_PAGES[new_report.id] = st.Page(
         create_report_page(new_report), title=new_report.title, url_path=new_report.id
     )
     logger.info("saved report")
-    gcp_logger.log_struct(
-        {
-            "event": "finish-research",
-            "user_id": user_id,
-            "report": {"id": new_report.id, "title": new_report.title},
-        },
-        severity="INFO",
-    )
 
     st.switch_page(page=REPORT_PAGES[new_report.id])

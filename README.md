@@ -1,13 +1,17 @@
-# Lawsy -- Legal Search Made Easy
+# Lawsy - Making Law Easy
 
 ## Requirements
 
 - Python
-    - uv `pip install uv`
-- GCP
-    - [Cloud SDK](https://cloud.google.com/sdk?hl=ja)
+    - `uv pip install uv`
+- OpenAI
+    - `OPENAI_API_KEY`
+- Tavily
+    - `TAVILY_API_KEY`
 
-## Setup
+## Run
+
+### 1. Install dependencies
 
 Install Python packages
 
@@ -15,29 +19,25 @@ Install Python packages
 make install
 ```
 
-## Create .env file
+### 2. Create .env file
 
 Create .env file and put it in the repository root directory.
 
 ```text
-OUTPUT_DIR=./outputs  # output directory in which processed data are placed
-HISTORY_BUCKET_NAME=885188444194-history  #  GCP bucket to store history data
-OPENAI_API_KEY=<<your api key>>
-TAVILY_API_KEY=<<your api key>>
+OUTPUT_DIR=./outputs  # path to the directory in which processed data are placed
+OPENAI_API_KEY=sk-...  # OpenAI API KEY
+TAVILY_API_KEY=tvly-...  # Tavly API KEY
 ```
 
-## Run App
-
-### Download Preprocessed Data
+### 3. Download Preprocessed Data
 
 ```shell
 make lawsy-download-preprocessed-data
 ```
 
-### Run
+## Run App
 
 ```shell
-make gcloud-application-default-login  # if you haven't logged in Google Cloud
 make lawsy-run-app
 ```
 
@@ -56,11 +56,3 @@ lint:
 ```shell
 make lint
 ```
-
-### Development Flow (merge into dev)
-
-1. Create your branch `feature/{{feature-name}}` from dev
-2. Create a pull request into dev
-3. Fix lint errors
-4. Review the PR
-5. Merge the PR

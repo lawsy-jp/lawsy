@@ -1,25 +1,19 @@
+from pathlib import Path
 from typing import Any
 
 import streamlit as st
 from streamlit_tags import st_tags
 
-from lawsy.app.utils.cookie import get_cookie, set_cookie
-
 
 def get_config(name: str, default_value: Any = None) -> Any:
     value = st.session_state.get("config_" + name)
     if value is None:
-        value = get_cookie("config_" + name)
-        if value is not None:
-            st.session_state["config_" + name] = value
-        else:
-            value = default_value
+        value = default_value
     return value
 
 
 def set_config(name: str, value: Any) -> None:
     st.session_state["config_" + name] = value
-    set_cookie(name, value)
 
 
 @st.dialog("すべての設定のリセット")
@@ -39,7 +33,6 @@ def reset_all_configs() -> None:
         if not key.startswith("config_"):
             continue
         st.session_state[key] = None
-        set_cookie(key, None)
     st.rerun()
 
 
@@ -52,6 +45,7 @@ def init_config():
 
     _init("free_web_search_enabled", True)
     _init("web_search_domains", ["go.jp", "courts.go.jp", "shugiin.go.jp", "sangiin.go.jp", "cao.go.jp"])
+    _init("history_dir", "./lawsy_history")
     _init("reasoning_details_display_enabled", False)
 
 
@@ -81,6 +75,15 @@ def create_config_page():
     # 表示設定
     # -------
     st.subheader("History")
+
+    # 生成履歴の保存場所
+    name = "history_dir"
+    value = get_config(name, "lawsy_history")
+    history_dir = st.text_input("履歴の保存場所", value=value or "./lawsy_history")
+    if not history_dir:
+        Path(history_dir).mkdir(parents=True, exist_ok=True)
+        set_config(name, history_dir)
+        st.rerun()
 
     # レポート表示時に推論過程を表示する
     name = "reasoning_details_display_enabled"

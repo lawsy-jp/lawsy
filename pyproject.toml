@@ -28,9 +28,6 @@ dependencies = [
     "tavily-python>=0.5.1",
     "httpx>=0.27.2",
     "fast-langdetect>=0.2.5",
-    "google-cloud-logging>=3.11.4",
-    "streamlit-cookies-controller>=0.0.4",
-    "google-cloud-storage>=3.0.0",
     "streamlit-tags>=1.2.8",
     "feedparser>=6.0.11",
 ]
