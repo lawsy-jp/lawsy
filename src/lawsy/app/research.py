@@ -75,7 +75,7 @@ def create_research_page():
     logger.info(f"using LM: {lm_name}")
     lm = load_lm(lm_name)
 
-    logo_col, _ = st.columns([1, 5])
+    logo_col, _ = st.columns([1, 8])
     with logo_col:
         st.image(get_logotitle_path())
 
@@ -307,7 +307,7 @@ def create_research_page():
             references.append(reference)
             total_length += len(reference)
             seen.add(result.url)
-        if len(seen) >= 200 or total_length >= 100000:  # max 128k tokens for GPT-4o
+        if len(seen) >= 30 or total_length >= 100000:  # max 128k tokens for GPT-4o
             break
     logger.info(f"effective knowledges: {len(seen)}")
 

@@ -30,7 +30,7 @@ def create_report_page(report: Report):
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
         # title logo
-        logo_col, _ = st.columns([1, 5])
+        logo_col, _ = st.columns([1, 8])
         with logo_col:
             st.image(get_logotitle_path())
 
