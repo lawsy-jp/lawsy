@@ -5,21 +5,52 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "beautifulsoup4>=4.12.3",
-    "jupyterlab>=4.3.4",
+    "dspy>=2.5.43",
+    "faiss-cpu>=1.9.0.post1",
+    "ftfy>=6.3.1",
+    "google-api-python-client>=2.159.0",
+    "ja-law-parser>=0.3.0",
     "loguru>=0.7.3",
     "lxml>=5.3.0",
+    "numpy>=2.2.1",
+    "openai>=1.58.1",
     "pandas>=2.2.3",
+    "pydantic>=2.10.4",
+    "python-dotenv>=1.0.1",
     "requests>=2.32.3",
+    "seaborn>=0.13.2",
+    "streamlit-markmap>=1.0.1",
+    "streamlit>=1.41.1",
     "tenacity>=9.0.0",
     "tqdm>=4.67.1",
-    "typer>=0.15.1",
+    "types-lxml>=2024.12.13",
+    "google-auth>=2.38.0",
+    "tavily-python>=0.5.1",
+    "httpx>=0.27.2",
+    "fast-langdetect>=0.2.5",
+    "streamlit-tags>=1.2.8",
+    "duckduckgo-search>=7.4.4",
 ]
 
 [dependency-groups]
 dev = [
+    "beautifulsoup4>=4.12.3",
     "pyright>=1.1.391",
     "ruff>=0.8.4",
+    "jupyterlab>=4.3.4",
+    "typer>=0.15.1",
+    "torch>=2.5.1",
+    "fugashi>=1.4.0",
+    "unidic-lite>=1.0.8",
+    "transformers>=4.47.1",
+    "sentence-transformers>=3.3.1",
+    "qdrant-client>=1.12.2",
+    "yasem>=0.4.1",
+]
+kokkai-search = [
+    "dspy>=2.5.43",
+    "openai>=1.58.1",
+    "safetensors>=0.4.5",
 ]
 
 [tool.ruff]

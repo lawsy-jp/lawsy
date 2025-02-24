@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+Mono:wght@400;700&display=swap');
+
+/* すべてのテキストに Noto Sans JP を適用 */
+body, p {
+    font-family: 'Noto Sans JP', sans-serif !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+    margin-top: 0rem !important;
+}
+
+/* 見出しのフォント */
+h1, h2, h3, h4 {
+    font-family: 'Noto Sans JP', sans-serif !important;
+}
+
+h1 {
+    font-size: 2.5rem !important;
+    line-height: 1.4 !important;
+}
+
+h2 {
+    font-size: 2rem !important;
+    line-height: 1.0 !important;
+    margin-bottom: 0rem !important;
+}
+
+h3 {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+    margin-top: 0rem !important;
+    margin-bottom: 0rem !important;
+}
+
+.st-emotion-cache-6tkfeg, .e1dbuyne6 {
+    font-size: 14px !important;
+    list-style-type: disc; /* ・をリストアイテムの前に追加 */
+}
+
+/* リファレンスをたたむ */
+.toggle-box {
+    display: none;
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin-top: 0px;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+input[type="checkbox"]:checked ~ .toggle-box {
+    display: block;
+}
+.toggle-label {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+.toggle-label::before {
+    content: "▶";
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    min-height: 14px;
+    text-align: center;
+    font-weight: normal;
+    margin-right: 3px;
+    font-size: 10px;
+    white-space: nowrap;
+}
+.toggle-label span {
+    text-decoration: None;
+}
+input[type="checkbox"]:checked + .toggle-label::before {
+    content: "▼";
+}
+
+/* tooltip 表示 */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    color: #0284C7;
+    text-decoration: underline;
+    white-space: normal;
+    margin: 0;
+    flex-wrap: nowrap;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+.tooltip .tooltiptext {
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 5px; 
+    background-color: white;
+    color: black;
+    text-align: left;
+    border-radius: 8px;
+    position: absolute;
+    left: -110px;
+    top: -305px;
+    width: 300px;
+    max-width: 300px;
+    height: 310px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border: 0.8px solid #99f;
+    box-sizing: border-box;
+    white-space: normal;
+    word-wrap: break-word;
+    flex-wrap: nowrap;
+    font-size: 90%;
+    margin: 5px; 
+}
+
+.tooltip-header {
+    display: inline-block;
+    position: relative;
+    height: 15px;
+    color: white;
+    font-weight: normal;
+    text-align: center;
+    padding: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    flex-wrap: nowrap;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+.tooltip-content {
+    padding: 4px;
+    background-color: white;
+    color: black;
+    overflow-y: auto;
+    flex-grow: 1;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+/* マウスオーバー時にツールチップを表示 */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/*
+.stIFrame {
+    font-family: 'Noto Sans Mono', monospace !important;
+    border: 2px gray solid;
+    text-indent: 1rem;
+    list-style-position: inside;
+}
+*/

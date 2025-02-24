@@ -1,16 +1,45 @@
-# lax_dx_hackathon_2025
-A repository for 「法令」×「デジタル」ハッカソン
+# Lawsy - Making Law Easy
 
+## Requirements
 
-## Development
-### Setup
+- Python
+    - `uv pip install uv`
+- OpenAI
+    - `OPENAI_API_KEY`
 
-install all dependencies:
+## Run
+
+### 1. Install dependencies
+
+Install Python packages
 
 ```shell
-pip install uv  # install uv
 make install
 ```
+
+### 2. Create .env file
+
+Create .env file and put it in the repository root directory.
+
+```text
+OPENAI_API_KEY=sk-...  # OpenAI API KEY
+LAWSY_WEB_SEARCH_ENGINE=DuckDuckGo
+LAWSY_LM=openai/gpt-4o-mini
+```
+
+### 3. Download Preprocessed Data
+
+```shell
+make lawsy-download-preprocessed-data
+```
+
+## Run App
+
+```shell
+make lawsy-run-app
+```
+
+## Development
 
 ### Format & Lint
 
@@ -24,17 +53,4 @@ lint:
 
 ```shell
 make lint
-```
-
-## Applications
-
-### Kokkai Crawler
-
-国会の議事録を取得するためのコード
-src: `src/kokkai_crawler`
-
-全議事録の取得（既存がある場合、最終年/月以外はスキップ）:
-
-```shell
-make crawl-all
 ```
