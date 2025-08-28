@@ -515,20 +515,42 @@ def create_research_page():
         config["func"]("\n\n".join(message_parts))
 
     with summary_box.container():
-        with st.expander("**⚠️ 具体的な問題・違反と該当法律**", expanded=True):
-            if violation_analysis.get("specific_problems") and len(violation_analysis["specific_problems"]) > 0:
-                st.markdown("**🚨 検出された問題点と該当法律**")
+        # compliance_statusに基づいて表示を変更
+        compliance_status = violation_analysis.get("compliance_status", "non-compliant")
+        message = violation_analysis.get("message", "")
+        
+        if compliance_status == "compliant":
+            # 問題なしの場合
+            with st.expander("**✅ 薬機法コンプライアンス判定結果**", expanded=True):
+                st.success(f"✅ **薬機法的な問題は検出されませんでした**")
+                if message:
+                    st.info(f"**判定詳細:** {message}")
+        else:
+            # 問題ありの場合
+            expander_title = "**⚠️ 具体的な問題・違反と該当法律**"
+            if compliance_status == "needs-modification":
+                expander_title = "**🟡 修正推奨事項と該当法律**"
+            elif compliance_status == "non-compliant":
+                expander_title = "**🔴 重要な違反・問題と該当法律**"
+                
+            with st.expander(expander_title, expanded=True):
+                if message:
+                    st.info(f"**全体判定:** {message}")
+                    
+                if violation_analysis.get("specific_problems") and len(violation_analysis["specific_problems"]) > 0:
+                    status_icon = "🚨" if compliance_status == "non-compliant" else "⚠️"
+                    st.markdown(f"**{status_icon} 検出された問題点と該当法律**")
 
-                # 重要度でソート（高→中→低）
-                sorted_problems = sorted(
-                    violation_analysis["specific_problems"],
-                    key=lambda x: get_severity_order(x.get("severity", "medium")),
-                )
+                    # 重要度でソート（高→中→低）
+                    sorted_problems = sorted(
+                        violation_analysis["specific_problems"],
+                        key=lambda x: get_severity_order(x.get("severity", "medium")),
+                    )
 
-                for i, problem in enumerate(sorted_problems, 1):
-                    display_problem_with_severity(problem, i)
-            else:
-                st.info("具体的な問題は検出されませんでした。")
+                    for i, problem in enumerate(sorted_problems, 1):
+                        display_problem_with_severity(problem, i)
+                else:
+                    st.info("具体的な問題は検出されませんでした。")
 
     # 結論セクションは既に表示済み（上記のwrite_conclusion_asyncで表示）
     # ここでの重複表示を削除
