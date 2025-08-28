@@ -11,11 +11,10 @@ def create_violation_summary_signature(max_items: int = 10):
 
     class ViolationSummary(dspy.Signature):
         __doc__ = f"""あなたは日本の薬機法令に精通した専門家です。
-        ユーザーの質問内容とレポート内容を分析し、以下の3点を簡潔にまとめてください：
+        ユーザーの質問内容とレポート内容を分析し、以下の2点を簡潔にまとめてください：
 
         1. 何が問題なのか（具体的な問題点・違反の可能性）
-        2. どの法律に違反しているのか（該当する具体的な法律・省令）
-        3. 問題の重要度（高・中・低の3段階評価）
+        2. 各問題に対してどの法律に違反しているのか（該当する具体的な法律・省令）
 
         【極めて重要な指示】
         - **evidenceフィールドには、ユーザーの質問文から問題となる具体的な記述を必ず引用**
@@ -63,7 +62,7 @@ def create_violation_summary_signature(max_items: int = 10):
         - ユーザーの質問文を分析し、薬機法的に問題となりうる行為・状況を特定
         - 問題となる箇所は必ずユーザーの質問文から原文のまま引用
         - 該当する法律はレポートの内容を参考に特定
-        - 問題点は{max_items}個まで、法律も{max_items}個までに絞って最も重要なものを選択
+        - 問題点は{max_items}個まで、各問題に対して該当法律を関連付け
         - 各問題について重要度を適切に判定
         - 各問題に対して具体的で実行可能な対応方法を提案
 
@@ -98,15 +97,15 @@ def create_violation_summary_signature(max_items: int = 10):
                     "problem": "問題の内容（簡潔に）",
                     "evidence": "ユーザーの質問文から問題となる箇所を正確に引用（必須）",
                     "severity": "重要度（high/medium/low）",
-                    "recommended_action": "推奨する対応方法（具体的で実行可能な内容）"
-                }}
-            ],
-            "specific_laws": [
-                {{
-                    "keyword": "法律の略称（例：薬機法、GCP省令）",
-                    "full_name": "法律の正式名称",
-                    "type": "分類（基本法、治験関連、製造関連、安全管理関連など）",
-                    "relevant_articles": "関連する条文番号（あれば）"
+                    "recommended_action": "推奨する対応方法（具体的で実行可能な内容）",
+                    "applicable_laws": [
+                        {{
+                            "keyword": "法律の略称（例：薬機法、GCP省令）",
+                            "full_name": "法律の正式名称",
+                            "type": "分類（基本法、治験関連、製造関連、安全管理関連など）",
+                            "relevant_articles": "関連する条文番号（あれば）"
+                        }}
+                    ]
                 }}
             ]
         }}
@@ -143,7 +142,6 @@ class ViolationSummarizer(dspy.Module):
 
             # データの整形と検証
             specific_problems = violation_data.get("specific_problems", [])
-            specific_laws = violation_data.get("specific_laws", [])
 
             # 薬機法関連法令のキーワードリスト
             pharma_law_keywords = [
@@ -166,21 +164,7 @@ class ViolationSummarizer(dspy.Module):
                 "安全管理",
             ]
 
-            # 薬機法関連のみをフィルタリング
-            filtered_laws = []
-            for law in specific_laws:
-                keyword = law.get("keyword", "")
-                # キーワードが薬機法関連かチェック
-                if any(pharma_keyword in keyword for pharma_keyword in pharma_law_keywords):
-                    filtered_laws.append(law)
-                    if len(filtered_laws) >= self.max_items:
-                        break
-
-            # max_itemsで制限
-            specific_problems = specific_problems[: self.max_items]
-            specific_laws = filtered_laws[: self.max_items]
-
-            # 法律名のマッピング（正式名称が不足している場合の補完）
+            # 薬機法関連のみをフィルタリングし、法律名のマッピング
             law_mappings = {
                 "薬機法": "医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律",
                 "薬事法": "医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律",
@@ -192,18 +176,33 @@ class ViolationSummarizer(dspy.Module):
                 "GQP省令": "医薬品、医薬部外品、化粧品及び再生医療等製品の品質管理の基準に関する省令",
             }
 
-            # 法律情報の補完
-            for law in specific_laws:
-                if "full_name" not in law and law.get("keyword") in law_mappings:
-                    law["full_name"] = law_mappings[law["keyword"]]
+            # max_itemsで制限し、各問題の該当法律情報を補完
+            filtered_problems = []
+            for problem in specific_problems[: self.max_items]:
+                # applicable_lawsが存在しない場合は空リストで初期化
+                if "applicable_laws" not in problem:
+                    problem["applicable_laws"] = []
+
+                # 各法律の情報を補完
+                filtered_laws = []
+                for law in problem.get("applicable_laws", []):
+                    keyword = law.get("keyword", "")
+                    # キーワードが薬機法関連かチェック
+                    if any(pharma_keyword in keyword for pharma_keyword in pharma_law_keywords):
+                        # 正式名称が不足している場合の補完
+                        if "full_name" not in law and keyword in law_mappings:
+                            law["full_name"] = law_mappings[keyword]
+                        filtered_laws.append(law)
+
+                problem["applicable_laws"] = filtered_laws
+                filtered_problems.append(problem)
 
             return {
-                "specific_problems": specific_problems,
-                "specific_laws": specific_laws,
-                "has_violations": len(specific_problems) > 0,
+                "specific_problems": filtered_problems,
+                "has_violations": len(filtered_problems) > 0,
             }
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse violation summary JSON: {e}")
             # フォールバック：空の結果を返す
-            return {"specific_problems": [], "specific_laws": [], "has_violations": False}
+            return {"specific_problems": [], "has_violations": False}
