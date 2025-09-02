@@ -30,6 +30,7 @@ dependencies = [
     "fast-langdetect>=0.2.5",
     "streamlit-tags>=1.2.8",
     "duckduckgo-search>=7.4.4",
+    "pyright>=1.1.404",
 ]
 
 [dependency-groups]
@@ -73,7 +74,7 @@ ignore = [
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
-known-first-party = ["anpr", "constants", "lott_inference", "main", "queue_handlers", "socket_server", "tf", "util"]
+known-first-party = []
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 split-on-trailing-comma = true
 

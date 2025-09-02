@@ -138,6 +138,7 @@ def create_article_chunk_vector_index(
         for line in tqdm(fin):
             chunk = json.loads(line)
             chunks[chunk["file_name"], chunk["anchor"]] = chunk
+    assert dim is not None
     retriever = FaissFlatArticleRetriever.create(dim=dim)
     meta_data = [
         {
